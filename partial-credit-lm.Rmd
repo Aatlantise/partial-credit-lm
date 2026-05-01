@@ -1,0 +1,79 @@
+---
+title: "partial-lm"
+output: html_document
+date: "2026-05-01"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+library(tidyverse)
+
+# 1. Load the data
+# We assign column names manually since the example shows no header row
+df <- read_csv("util/blimp_results.csv", 
+               col_names = c("id", "model", "task", "accuracy"))
+
+# 2. Transform to wide format
+df_wide <- df %>%
+  # Remove the 'id' column as it is unique per row and prevents pivoting
+  select(task, model, accuracy) %>%
+  # Spread the 'model' names into columns and fill with 'accuracy' values
+  pivot_wider(names_from = model, values_from = accuracy)
+
+# 3. View the reshaped data
+print(df_wide)
+
+# 4. Save the wide format for your paper/Overleaf
+write_csv(df_wide, "blimp_results_wide.csv")
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+library(tidyverse)
+library(pheatmap) # You may need to install.packages("pheatmap")
+
+# 1. Load your wide data
+df_wide <- read_csv("blimp_by_epsilon.csv", col_names = c("Task", "0", "0.1", "0.5", "0.9", "1"))
+
+# 2. Prepare the data for a heatmap
+# We need a numeric matrix where the row names are the tasks
+mat <- df_wide %>%
+  column_to_rownames("Task") %>%
+  as.matrix()
+
+# 3. Create the Heatmap (Raw Accuracy)
+pheatmap(mat, 
+         # cluster_rows = FALSE,
+         # cluster_cols = FALSE,
+         main = "Raw BLiMP Accuracy by Model",
+         color = colorRampPalette(c("white", "orange", "red"))(100),
+         display_numbers = FALSE, # Set to TRUE if you want to see the digits
+         fontsize_row = 6,        # Small font so all 67 tasks fit
+         cluster_cols = FALSE)    # Keep models in your specified order
+
+# 4. THE "EXCELLENCE" HEATMAP (Z-Scores)
+# This standardizes by row (task). 
+# Red = Model is much better than its peers on this task.
+# Blue = Model is worse than its peers.
+pheatmap(mat, 
+         scale = "row", 
+         main = "Relative Performance (Z-Scores per Task)",
+         color = colorRampPalette(c("navy", "white", "firebrick3"))(100),
+         fontsize_row = 6,
+         clustering_distance_rows = "euclidean", # Groups similar linguistic tasks
+         cluster_cols = FALSE)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

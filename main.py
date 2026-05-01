@@ -180,6 +180,7 @@ def main():
 
         # 3. THE ULTIMATE SAFETY NET: Trades ~10% speed for massive memory savings
         gradient_checkpointing=True,
+        label_names=["input_ids", "pos_tags"],
         dataloader_num_workers=4,
 
         learning_rate=args.lr,
